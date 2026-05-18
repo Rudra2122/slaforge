@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+POST,/inference/,HTTPError('500 Server Error: Internal Server Error for url: /inference/'),482
+POST,/inference/,"ConnectionResetError(54, 'Connection reset by peer')",7

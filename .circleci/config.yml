@@ -1,0 +1,86 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/python:3.11
+      - image: postgres:16
+        environment:
+          POSTGRES_USER: slaforge
+          POSTGRES_PASSWORD: slaforge
+          POSTGRES_DB: slaforge
+      - image: redis:7-alpine
+
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
+
+      - run:
+          name: Wait for services
+          command: sleep 5
+
+      - run:
+          name: Run migrations
+          command: alembic upgrade head
+          environment:
+            DATABASE_URL: postgresql://slaforge:slaforge@localhost:5432/slaforge
+            REDIS_URL: redis://localhost:6379
+            SECRET_KEY: test-secret
+            USE_MOCK_MODELS: "true"
+
+      - run:
+          name: Run tests
+          command: pytest tests/ -v --tb=short
+          environment:
+            DATABASE_URL: postgresql://slaforge:slaforge@localhost:5432/slaforge
+            REDIS_URL: redis://localhost:6379
+            SECRET_KEY: test-secret
+            USE_MOCK_MODELS: "true"
+
+  benchmark:
+    docker:
+      - image: cimg/python:3.11
+      - image: postgres:16
+        environment:
+          POSTGRES_USER: slaforge
+          POSTGRES_PASSWORD: slaforge
+          POSTGRES_DB: slaforge
+      - image: redis:7-alpine
+
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
+      - run:
+          name: Start server
+          command: uvicorn app.main:app --port 8000 &
+          background: true
+      - run:
+          name: Wait for server
+          command: sleep 5
+      - run:
+          name: Run load test (CI gate — p95 must be < 500ms)
+          command: |
+            locust -f load_tests/locustfile.py --host=http://localhost:8000 \
+              --users 20 --spawn-rate 5 --run-time 30s --headless \
+              --csv=results/ci_benchmark
+            # Fail CI if p95 > 500ms
+            python3 -c "
+            import csv
+            with open('results/ci_benchmark_stats.csv') as f:
+              rows = list(csv.DictReader(f))
+              p95 = float(rows[0].get('95%', 0))
+              print(f'p95 latency: {p95}ms')
+              assert p95 < 500, f'p95 {p95}ms exceeds 500ms gate'
+            "
+
+workflows:
+  build-test-benchmark:
+    jobs:
+      - test
+      - benchmark:
+          requires:
+            - test
