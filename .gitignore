@@ -1,0 +1,12 @@
+# Create .gitignore
+cat > .gitignore << 'EOF'
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.egg-info/
+.DS_Store
+results/
+*.csv
+EOF
