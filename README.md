@@ -18,9 +18,13 @@ Built with FastAPI, Redis, PostgreSQL, Prometheus, and Grafana. Sustained **558 
 
 ## Dashboard
 
-| Router Decisions & Cost Attribution | Requests/sec & p95 Latency |
-|-------------------------------------|---------------------------|
-| ![Dashboard Top](results/dashboard1.png) | ![Dashboard Bottom](results/dashboard2.png) |
+| Router Decisions & Cost Attribution |
+|-------------------------------------|
+| ![Dashboard Top](results/dashboard1.png) |
+
+| Requests/sec & p95 Latency |
+|---------------------------|
+| ![Dashboard Bottom](results/dashboard2.png) |
 
 *Live Grafana dashboard during a 500-user load test. Zero SLA breaches, routing decisions split across all 3 tiers, cost tracked per tenant in real time.*
 
