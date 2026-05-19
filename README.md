@@ -324,6 +324,3 @@ pytest tests/ -v --tb=short
 
 ---
 
-## License
-
-MIT
